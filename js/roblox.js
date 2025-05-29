@@ -18,6 +18,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const fCE = document.getElementById('friendCount');
     const foCE = document.getElementById('followerCount');
     const flCE = document.getElementById('followingCount');
+    const lVE = document.getElementById('limitedValue');
+    
+    const bC = document.getElementById('badgesContainer');
+    const oC = document.getElementById('outfitsContainer');
+    const lC = document.getElementById('limitedsContainer');
 
     const uLME = document.getElementById('userListModal');
     const uLTE = document.getElementById('userListTitle');
@@ -50,7 +55,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     if (sFE) {
-        sFE.addEventListener('submit', function(ev) {
+        sFE.addEventListener('submit', async function(ev) {
             ev.preventDefault();
             const u = document.getElementById('username').value.trim();
             
@@ -63,13 +68,13 @@ document.addEventListener('DOMContentLoaded', function() {
             if (eE) eE.classList.remove('show'); 
             if (pCE) pCE.classList.add('hidden');
             
-            fRP(u);
+            await fD(u);
         });
     }
     
     let cUI = null;
 
-    async function fRP(u) {
+    async function fD(u) {
         try {
             const res = await fetch(`https://api.foul.sh/profile/${u}`);
             
@@ -97,41 +102,16 @@ document.addEventListener('DOMContentLoaded', function() {
             
             cUI = pD.id; 
             dP(pD, frD, foD, flD, bD, aU);
+            
+            fO(cUI);
+            fL(cUI);
+
         } catch (er) {
             if (lE) lE.classList.add('hidden');
             sE(er.message || 'Failed to fetch profile data. Try again.');
         }
     }
     
-    function displayBadges(badgesData) { 
-        const bC = document.getElementById('badgesContainer');
-        if (!bC) { 
-            return;
-        }
-        bC.innerHTML = '';
-
-        if (!badgesData || badgesData.length === 0) {
-            bC.innerHTML = `
-                <div class="w-full text-center py-4">
-                    <p class="text-zinc-500">No badges to display.</p>
-                </div>
-            `;
-            return;
-        }
-
-        badgesData.forEach(b => {
-            const bE = document.createElement('div');
-            bE.className = 'badge-item';
-            bE.innerHTML = `
-                <img src="${b.imageUrl || 'https://placehold.co/150x150/333333/ffffff?text=No+Badge+Image'}" 
-                    alt="${b.name}"
-                    onerror="this.onerror=null;this.src='https://placehold.co/150x150/333333/ffffff?text=No+Badge+Image';">
-                <p>${b.name}</p>
-            `;
-            bC.appendChild(bE);
-        });
-    }
-
     function dP(pD, frD, foD, flD, bD, aU) {
         if (dNE) dNE.textContent = pD.displayName || pD.name;
         if (uDE) {
@@ -164,11 +144,138 @@ document.addEventListener('DOMContentLoaded', function() {
         if (foCE) foCE.textContent = fN(foD ? foD.count || 0 : 0);
         if (flCE) flCE.textContent = fN(flD ? flD.count || 0 : 0);
         
-        displayBadges(bD);
+        dB(bD);
         
         if (pCE) pCE.classList.remove('hidden');
     }
-    
+
+    async function fO(uI) {
+        if (!oC) return;
+        oC.innerHTML = '';
+        try {
+            const res = await fetch(`https://api.foul.sh/outfits/${uI}`);
+            if (!res.ok) {
+                const eD = await res.json();
+                throw new Error(eD.error || 'Failed to fetch outfits.');
+            }
+            const d = await res.json();
+            dO(d.outfits);
+        } catch (e) {
+            sE(e.message || 'Failed to load outfits.');
+            oC.innerHTML = `
+                <div class="w-full text-center py-4">
+                    <p class="text-zinc-500">Could not load outfits.</p>
+                </div>
+            `;
+        }
+    }
+
+    function dO(oD) {
+        if (!oC) return;
+        oC.innerHTML = '';
+        if (!oD || oD.length === 0) {
+            oC.innerHTML = `
+                <div class="w-full text-center py-4">
+                    <p class="text-zinc-500">No saved outfits to display.</p>
+                </div>
+            `;
+            return;
+        }
+        oD.forEach(o => {
+            const oE = document.createElement('div');
+            oE.className = 'outfit-item';
+            oE.innerHTML = `
+                <img src="${o.imageUrl || 'https://placehold.co/150x150/333333/ffffff?text=Outfit'}" 
+                     alt="${o.name}"
+                     onerror="this.onerror=null;this.src='https://placehold.co/150x150/333333/ffffff?text=Outfit';">
+                <p>${o.name}</p>
+            `;
+            oC.appendChild(oE);
+        });
+    }
+
+    async function fL(uI) {
+        if (!lC || !lVE) return;
+        lC.innerHTML = '';
+        lVE.textContent = 'N/A'; // Reset value
+        try {
+            const res = await fetch(`https://api.foul.sh/limiteds/${uI}`);
+            if (!res.ok) {
+                const eD = await res.json();
+                throw new Error(eD.error || 'Failed to fetch limited items.');
+            }
+            const d = await res.json();
+            dL(d.limiteds);
+            // Limited Value is not directly available from Roblox, update if you integrate a 3rd party
+            // For now, keep it as N/A or a message.
+            // if (d.totalValue) {
+            //     lVE.textContent = `$${fN(d.totalValue)}`;
+            // } else {
+                lVE.textContent = 'Requires external data';
+            // }
+        } catch (e) {
+            sE(e.message || 'Failed to load limited items.');
+            lC.innerHTML = `
+                <div class="w-full text-center py-4">
+                    <p class="text-zinc-500">Could not load limited items.</p>
+                </div>
+            `;
+            lVE.textContent = 'Error';
+        }
+    }
+
+    function dL(lD) {
+        if (!lC) return;
+        lC.innerHTML = '';
+        if (!lD || lD.length === 0) {
+            lC.innerHTML = `
+                <div class="w-full text-center py-4 col-span-full">
+                    <p class="text-zinc-500">No limited items to display.</p>
+                </div>
+            `;
+            return;
+        }
+        lD.forEach(i => {
+            const iE = document.createElement('div');
+            iE.className = 'limited-item';
+            iE.innerHTML = `
+                <img src="${i.imageUrl || 'https://placehold.co/150x150/333333/ffffff?text=Limited'}" 
+                     alt="${i.name}"
+                     onerror="this.onerror=null;this.src='https://placehold.co/150x150/333333/ffffff?text=Limited';">
+                <p>${i.name}</p>
+            `;
+            lC.appendChild(iE);
+        });
+    }
+
+    function dB(bD) { 
+        if (!bC) { 
+            return;
+        }
+        bC.innerHTML = '';
+
+        if (!bD || bD.length === 0) {
+            bC.innerHTML = `
+                <div class="w-full text-center py-4">
+                    <p class="text-zinc-500">No badges to display.</p>
+                </div>
+            `;
+            return;
+        }
+
+        bD.forEach(b => {
+            const bE = document.createElement('div');
+            bE.className = 'badge-item';
+            bE.innerHTML = `
+                <img src="${b.imageUrl || 'https://placehold.co/150x150/333333/ffffff?text=No+Badge+Image'}" 
+                    alt="${b.name}"
+                    onerror="this.onerror=null;this.src='https://placehold.co/150x150/333333/ffffff?text=No+Badge+Image';">
+                <p>${b.name}</p>
+            `;
+            bC.appendChild(bE);
+        });
+    }
+
     function sE(m) {
         if (eME) eME.textContent = m;
         if (eE) {
