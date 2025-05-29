@@ -271,3 +271,22 @@ input[type="text"]:focus {
     outline: none;
     cursor: default;
 }
+
+#userListContent::-webkit-scrollbar {
+    width: 8px;
+}
+
+#userListContent::-webkit-scrollbar-track {
+    background: #2a2a2a;
+    border-radius: 10px;
+}
+
+#userListContent::-webkit-scrollbar-thumb {
+    background: #555555;
+    border-radius: 10px;
+    border: 2px solid #2a2a2a;
+}
+
+#userListContent::-webkit-scrollbar-thumb:hover {
+    background: #777777;
+}
